@@ -1,5 +1,11 @@
+"""
+Telegram bot service for handling user interactions.
+Manages bot commands and user subscription lifecycle.
+"""
+
 from telegram import Update
 from telegram.ext import ContextTypes
+
 from .feed_service import FeedService
 from core.logger import setup_logger
 

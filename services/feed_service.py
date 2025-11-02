@@ -1,6 +1,12 @@
+"""
+Feed service for backend API communication.
+Handles fetching and formatting of feed data from Content Hub API.
+"""
+
 import requests
 from datetime import datetime
 from typing import Optional, List, Dict
+
 from core.logger import setup_logger
 from core.config import Config
 

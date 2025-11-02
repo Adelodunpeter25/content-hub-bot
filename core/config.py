@@ -1,3 +1,8 @@
+"""
+Application configuration management.
+Handles environment variables and application settings validation.
+"""
+
 import os
 from dotenv import load_dotenv
 

@@ -1,11 +1,22 @@
-from flask import Flask, request, jsonify
-from telegram import Bot, Update
+"""
+Content Hub Telegram Bot - Main Application
+
+A Flask-based Telegram bot that fetches feeds from Content Hub API every 20 minutes
+and sends updates to subscribed users. Provides health monitoring and webhook endpoints.
+"""
+
+from flask import Flask
+from telegram import Bot
 from telegram.ext import Application, CommandHandler
-from apscheduler.schedulers.background import BackgroundScheduler
+
 from core.config import Config
 from core.logger import setup_logger
 from services.feed_service import FeedService
 from services.telegram_service import TelegramService
+from services.scheduler_service import SchedulerService
+from routes.health import health_bp
+from routes.info import info_bp
+from routes.webhook import webhook_bp
 
 # Validate configuration
 Config.validate()
@@ -15,56 +26,18 @@ logger = setup_logger(__name__)
 app = Flask(__name__)
 app.secret_key = Config.FLASK_SECRET_KEY
 
+# Register blueprints
+app.register_blueprint(health_bp)
+app.register_blueprint(info_bp)
+app.register_blueprint(webhook_bp)
+
 bot = Bot(token=Config.TELEGRAM_BOT_TOKEN)
 subscribers = set()
 
 # Initialize services
 feed_service = FeedService(Config.BACKEND_API_URL)
 telegram_service = TelegramService(feed_service, subscribers)
-
-async def send_feeds_to_subscribers():
-    """Send latest feeds to all subscribers"""
-    if not subscribers:
-        return
-        
-    feeds = feed_service.fetch_feeds()
-    if not feeds:
-        return
-        
-    message = feed_service.format_feeds(feeds)
-    
-    for chat_id in subscribers.copy():
-        try:
-            await bot.send_message(chat_id=chat_id, text=message, parse_mode='HTML')
-        except Exception as e:
-            logger.error(f"Failed to send to {chat_id}: {e}")
-            subscribers.discard(chat_id)
-
-@app.route('/health', methods=['GET'])
-def health_check():
-    return jsonify({'status': 'healthy', 'subscribers': len(subscribers)})
-
-@app.route('/webhook', methods=['POST'])
-def webhook():
-    """Handle Telegram webhook"""
-    try:
-        update = Update.de_json(request.get_json(), bot)
-        return jsonify({'status': 'ok'})
-    except Exception as e:
-        logger.error(f"Webhook error: {e}")
-        return jsonify({'error': str(e)}), 400
-
-def setup_scheduler():
-    """Setup background scheduler for periodic feed fetching"""
-    scheduler = BackgroundScheduler()
-    scheduler.add_job(
-        func=lambda: app.app_context().run(send_feeds_to_subscribers()),
-        trigger="interval",
-        minutes=Config.FEED_INTERVAL_MINUTES,
-        id='fetch_feeds'
-    )
-    scheduler.start()
-    return scheduler
+scheduler_service = SchedulerService(bot, feed_service, subscribers)
 
 if __name__ == '__main__':
     # Setup Telegram bot
@@ -74,9 +47,9 @@ if __name__ == '__main__':
     application.add_handler(CommandHandler("stop", telegram_service.stop))
     
     # Setup scheduler
-    scheduler = setup_scheduler()
+    scheduler = scheduler_service.setup_scheduler(app)
     
     try:
         app.run(host='0.0.0.0', port=5000, debug=False)
     except KeyboardInterrupt:
-        scheduler.shutdown()
+        scheduler_service.shutdown()

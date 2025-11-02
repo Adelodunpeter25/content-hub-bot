@@ -1,3 +1,8 @@
+"""
+Logging configuration and setup utilities.
+Provides centralized logging configuration for the application.
+"""
+
 import logging
 
 def setup_logger(name: str = __name__) -> logging.Logger:
