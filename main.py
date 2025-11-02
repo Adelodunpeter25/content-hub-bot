@@ -39,13 +39,13 @@ feed_service = FeedService(Config.BACKEND_API_URL)
 telegram_service = TelegramService(feed_service, subscribers)
 scheduler_service = SchedulerService(bot, feed_service, subscribers)
 
+# Setup Telegram bot application
+application = Application.builder().token(Config.TELEGRAM_BOT_TOKEN).build()
+application.add_handler(CommandHandler("start", telegram_service.start))
+application.add_handler(CommandHandler("feeds", telegram_service.get_feeds))
+application.add_handler(CommandHandler("stop", telegram_service.stop))
+
 if __name__ == '__main__':
-    # Setup Telegram bot
-    application = Application.builder().token(Config.TELEGRAM_BOT_TOKEN).build()
-    application.add_handler(CommandHandler("start", telegram_service.start))
-    application.add_handler(CommandHandler("feeds", telegram_service.get_feeds))
-    application.add_handler(CommandHandler("stop", telegram_service.stop))
-    
     # Setup scheduler
     scheduler = scheduler_service.setup_scheduler(app)
     
