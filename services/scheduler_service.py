@@ -33,7 +33,7 @@ class SchedulerService:
         
         for chat_id in self.subscribers.copy():
             try:
-                await self.bot.send_message(chat_id=chat_id, text=message, parse_mode='HTML')
+                await self.bot.send_message(chat_id=chat_id, text=message, parse_mode='HTML', disable_web_page_preview=True)
             except Exception as e:
                 logger.error(f"Failed to send to {chat_id}: {e}")
                 self.subscribers.discard(chat_id)

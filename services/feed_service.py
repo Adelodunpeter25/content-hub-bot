@@ -36,35 +36,41 @@ class FeedService:
             return "No feeds available"
         
         if not title:
-            title = f"📰 <b>Latest Articles</b> ({datetime.now().strftime('%H:%M')})"
-        else:
-            title = f"{title} ({datetime.now().strftime('%H:%M')})"
-            
-        message = f"{title}\n\n"
+            title = f"📰 <b>Latest Articles</b>"
         
-        for feed in feeds[:Config.MAX_FEEDS_PER_MESSAGE]:
-            title = feed.get('title', 'No title')[:80]
+        message = f"{title}\n<i>{datetime.now().strftime('%B %d, %Y at %H:%M')}</i>\n\n"
+        
+        for i, feed in enumerate(feeds[:Config.MAX_FEEDS_PER_MESSAGE], 1):
+            article_title = feed.get('title', 'No title')[:75]
             link = feed.get('link', '')
             source = feed.get('source', 'Unknown')
-            summary = feed.get('summary', '').strip()[:150]
+            summary = feed.get('summary', '').strip()[:140]
             categories = ', '.join(feed.get('categories', []))
             published = feed.get('published', '')
-            message += f"🔗 <b><a href='{link}'>{title}</a></b>\n"
             
+            # Article number and title
+            message += f"<b>{i}. <a href='{link}'>{article_title}</a></b>\n"
+            
+            # Summary
             if summary:
-                message += f"📝 {summary}...\n"
+                message += f"<i>{summary}...</i>\n"
             
-            message += f"📺 {source}"
+            # Source and metadata
+            message += f"📺 <b>{source}</b>"
             if categories:
-                message += f" | 🏷️ {categories}"
+                message += f" • 🏷️ {categories}"
             
             if published:
                 try:
                     pub_date = datetime.fromisoformat(published.replace('Z', '+00:00'))
-                    message += f" | 📅 {pub_date.strftime('%m/%d %H:%M')}"
+                    message += f" • 📅 {pub_date.strftime('%m/%d %H:%M')}"
                 except:
                     pass
             
-            message += "\n\n"
+            # Add separator between articles (except last one)
+            if i < min(len(feeds), Config.MAX_FEEDS_PER_MESSAGE):
+                message += "\n\n──────────\n\n"
+            else:
+                message += "\n"
             
         return message

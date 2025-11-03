@@ -30,7 +30,7 @@ class TelegramService:
         feeds = self.feed_service.fetch_feeds()
         if feeds:
             message = self.feed_service.format_feeds(feeds)
-            await update.message.reply_text(message, parse_mode='HTML')
+            await update.message.reply_text(message, parse_mode='HTML', disable_web_page_preview=True)
         else:
             await update.message.reply_text("Sorry, couldn't fetch feeds right now.")
 
@@ -41,7 +41,7 @@ class TelegramService:
             # Get only the 3 most recent feeds
             latest_feeds = feeds[:3]
             message = self.feed_service.format_feeds(latest_feeds, title="🔥 Latest Updates")
-            await update.message.reply_text(message, parse_mode='HTML')
+            await update.message.reply_text(message, parse_mode='HTML', disable_web_page_preview=True)
         else:
             await update.message.reply_text("Sorry, couldn't fetch feeds right now.")
 
