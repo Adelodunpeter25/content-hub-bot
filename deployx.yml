@@ -1,0 +1,13 @@
+build:
+  command: uv sync --frozen
+  output: .
+platform: render
+project:
+  name: content-hub-bot
+  type: python
+render:
+  build_command: uv sync --frozen
+  environment: python
+  name: content-hub-bot
+  start_command: uv run python main.py
+  type: web_service

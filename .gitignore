@@ -11,3 +11,4 @@ wheels/
 
 # environmental variables
 .env
+.deployx_render_token
