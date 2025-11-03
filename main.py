@@ -5,6 +5,7 @@ A Flask-based Telegram bot that fetches feeds from Content Hub API every 20 minu
 and sends updates to subscribed users. Provides health monitoring and webhook endpoints.
 """
 
+import os
 import sys
 from flask import Flask
 from telegram import Bot
@@ -59,7 +60,8 @@ if __name__ == '__main__':
     else:
         # Run Flask server (webhook mode) with scheduler
         scheduler = scheduler_service.setup_scheduler(app)
+        port = int(os.environ.get('PORT'))
         try:
-            app.run(host='0.0.0.0', port=5000, debug=True)
+            app.run(host='0.0.0.0', port=port, debug=False)
         except KeyboardInterrupt:
             scheduler_service.shutdown()
