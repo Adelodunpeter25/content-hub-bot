@@ -38,15 +38,28 @@ class FeedService:
         message = f"📰 <b>Latest Articles</b> ({datetime.now().strftime('%H:%M')})\n\n"
         
         for feed in feeds[:Config.MAX_FEEDS_PER_MESSAGE]:
-            title = feed.get('title', 'No title')[:100]
+            title = feed.get('title', 'No title')[:80]
             link = feed.get('link', '')
             source = feed.get('source', 'Unknown')
+            summary = feed.get('summary', '').strip()[:150]
             categories = ', '.join(feed.get('categories', []))
+            published = feed.get('published', '')
+            message += f"🔗 <b><a href='{link}'>{title}</a></b>\n"
             
-            message += f"🔗 <a href='{link}'>{title}</a>\n"
+            if summary:
+                message += f"📝 {summary}...\n"
+            
             message += f"📺 {source}"
             if categories:
                 message += f" | 🏷️ {categories}"
+            
+            if published:
+                try:
+                    pub_date = datetime.fromisoformat(published.replace('Z', '+00:00'))
+                    message += f" | 📅 {pub_date.strftime('%m/%d %H:%M')}"
+                except:
+                    pass
+            
             message += "\n\n"
             
         return message
