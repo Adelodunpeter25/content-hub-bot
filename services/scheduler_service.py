@@ -3,6 +3,7 @@ Scheduler service for periodic feed broadcasting.
 Handles automated feed fetching and distribution to subscribers.
 """
 
+import asyncio
 from apscheduler.schedulers.background import BackgroundScheduler
 from telegram import Bot
 
@@ -37,11 +38,20 @@ class SchedulerService:
                 logger.error(f"Failed to send to {chat_id}: {e}")
                 self.subscribers.discard(chat_id)
 
+    def _run_async_job(self):
+        """Run async job in new event loop"""
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            loop.run_until_complete(self.send_feeds_to_subscribers())
+        finally:
+            loop.close()
+    
     def setup_scheduler(self, app):
         """Setup background scheduler for periodic feed fetching"""
         self.scheduler = BackgroundScheduler()
         self.scheduler.add_job(
-            func=lambda: app.app_context().run(self.send_feeds_to_subscribers()),
+            func=self._run_async_job,
             trigger="interval",
             minutes=Config.FEED_INTERVAL_MINUTES,
             id='fetch_feeds'

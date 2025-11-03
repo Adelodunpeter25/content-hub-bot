@@ -24,6 +24,7 @@ A Flask-based Telegram bot that fetches feeds from your backend API every 20 min
 - `TELEGRAM_BOT_TOKEN`: Your Telegram bot token from @BotFather
 - `BACKEND_API_URL`: Your backend API base URL
 - `FLASK_SECRET_KEY`: Secret key for Flask sessions
+- `PORT`: Port number for the Flask server (defaults to 5000)
 
 ## Bot Commands
 

@@ -3,6 +3,7 @@ Telegram webhook endpoint for handling bot updates.
 Processes incoming messages and commands from Telegram.
 """
 
+import asyncio
 from flask import Blueprint, request, jsonify, current_app
 from telegram import Update
 
@@ -16,18 +17,31 @@ webhook_bp = Blueprint('webhook', __name__, url_prefix='/api')
 def webhook():
     """Handle Telegram webhook updates"""
     try:
-        # Access bot and application from Flask app context
+        # Access services from Flask app context
         bot = current_app.config.get('BOT')
-        application = current_app.config.get('APPLICATION')
+        telegram_service = current_app.config.get('TELEGRAM_SERVICE')
         
-        if not bot or not application:
+        if not bot or not telegram_service:
             return jsonify({'error': 'Bot not configured'}), 500
             
         update = Update.de_json(request.get_json(), bot)
         
-        # Process the update through the application
-        if update:
-            application.process_update(update)
+        # Process the update manually
+        if update and update.message:
+            message = update.message
+            if message.text:
+                # Run async methods in a new event loop
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                try:
+                    if message.text.startswith('/start'):
+                        loop.run_until_complete(telegram_service.start(update, None))
+                    elif message.text.startswith('/feeds'):
+                        loop.run_until_complete(telegram_service.get_feeds(update, None))
+                    elif message.text.startswith('/stop'):
+                        loop.run_until_complete(telegram_service.stop(update, None))
+                finally:
+                    loop.close()
             
         return jsonify({'status': 'ok'})
     except Exception as e:
