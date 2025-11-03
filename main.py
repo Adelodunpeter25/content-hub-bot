@@ -86,6 +86,7 @@ if __name__ == '__main__':
         telegram_service = app.config['TELEGRAM_SERVICE']
         application.add_handler(CommandHandler("start", telegram_service.start))
         application.add_handler(CommandHandler("feeds", telegram_service.get_feeds))
+        application.add_handler(CommandHandler("latest", telegram_service.get_latest))
         application.add_handler(CommandHandler("stop", telegram_service.stop))
         
         application.run_polling()

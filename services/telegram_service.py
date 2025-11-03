@@ -22,7 +22,7 @@ class TelegramService:
         self.subscribers.add(chat_id)
         await update.message.reply_text(
             "Welcome! You'll receive feed updates every 20 minutes.\n"
-            "Commands:\n/feeds - Get latest feeds\n/stop - Unsubscribe"
+            "Commands:\n/feeds - Get all feeds\n/latest - Get 3 most recent\n/stop - Unsubscribe"
         )
 
     async def get_feeds(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -30,6 +30,17 @@ class TelegramService:
         feeds = self.feed_service.fetch_feeds()
         if feeds:
             message = self.feed_service.format_feeds(feeds)
+            await update.message.reply_text(message, parse_mode='HTML')
+        else:
+            await update.message.reply_text("Sorry, couldn't fetch feeds right now.")
+
+    async def get_latest(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Handle /latest command - shows only 3 most recent feeds"""
+        feeds = self.feed_service.fetch_feeds()
+        if feeds:
+            # Get only the 3 most recent feeds
+            latest_feeds = feeds[:3]
+            message = self.feed_service.format_feeds(latest_feeds, title="🔥 Latest Updates")
             await update.message.reply_text(message, parse_mode='HTML')
         else:
             await update.message.reply_text("Sorry, couldn't fetch feeds right now.")

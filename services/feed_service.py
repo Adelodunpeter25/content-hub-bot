@@ -30,12 +30,17 @@ class FeedService:
             return None
 
     @staticmethod
-    def format_feeds(feeds: List[Dict]) -> str:
+    def format_feeds(feeds: List[Dict], title: str = None) -> str:
         """Format feeds for Telegram message"""
         if not feeds or not isinstance(feeds, list):
             return "No feeds available"
+        
+        if not title:
+            title = f"📰 <b>Latest Articles</b> ({datetime.now().strftime('%H:%M')})"
+        else:
+            title = f"{title} ({datetime.now().strftime('%H:%M')})"
             
-        message = f"📰 <b>Latest Articles</b> ({datetime.now().strftime('%H:%M')})\n\n"
+        message = f"{title}\n\n"
         
         for feed in feeds[:Config.MAX_FEEDS_PER_MESSAGE]:
             title = feed.get('title', 'No title')[:80]

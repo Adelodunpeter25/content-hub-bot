@@ -45,6 +45,9 @@ def webhook():
                     elif message.text.startswith('/feeds'):
                         logger.info("Processing /feeds command")
                         loop.run_until_complete(telegram_service.get_feeds(update, None))
+                    elif message.text.startswith('/latest'):
+                        logger.info("Processing /latest command")
+                        loop.run_until_complete(telegram_service.get_latest(update, None))
                     elif message.text.startswith('/stop'):
                         logger.info("Processing /stop command")
                         loop.run_until_complete(telegram_service.stop(update, None))
