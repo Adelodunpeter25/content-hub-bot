@@ -7,6 +7,7 @@ and sends updates to subscribed users. Provides health monitoring and webhook en
 
 import os
 import sys
+import asyncio
 from flask import Flask
 from telegram import Bot
 from telegram.ext import Application, CommandHandler
@@ -54,6 +55,24 @@ def init_services():
     
     return app.config
 
+def setup_webhook():
+    """Setup Telegram webhook for production"""
+    webhook_url = "https://content-hub-bot.onrender.com/api/webhook"
+    async def set_webhook():
+        bot = app.config['BOT']
+        try:
+            await bot.set_webhook(url=webhook_url)
+            logger.info(f"Webhook set to: {webhook_url}")
+        except Exception as e:
+            logger.error(f"Failed to set webhook: {e}")
+    
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    try:
+        loop.run_until_complete(set_webhook())
+    finally:
+        loop.close()
+
 init_services()
 
 if __name__ == '__main__':
@@ -74,7 +93,12 @@ if __name__ == '__main__':
         # Run Flask server (webhook mode) with scheduler
         scheduler_service = app.config['SCHEDULER_SERVICE']
         scheduler = scheduler_service.setup_scheduler(app)
+        
+        # Setup webhook for production
+        setup_webhook()
+        
         port = int(os.environ.get('PORT'))
+        logger.info(f"Starting Flask server on port {port}")
         try:
             app.run(host='0.0.0.0', port=port, debug=False)
         except KeyboardInterrupt:
