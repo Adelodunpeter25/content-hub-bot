@@ -19,12 +19,12 @@ class FeedService:
     def fetch_feeds(self) -> Optional[List[Dict]]:
         """Fetch feeds from backend API"""
         try:
-            response = requests.get(
-                f"{self.backend_url}/feeds", 
-                timeout=Config.REQUEST_TIMEOUT
-            )
+            url = f"{self.backend_url}/api/feeds"
+            response = requests.get(url, timeout=Config.REQUEST_TIMEOUT)
             response.raise_for_status()
-            return response.json()
+            data = response.json()
+            articles = data.get('articles', [])
+            return articles
         except requests.RequestException as e:
             logger.error(f"Failed to fetch feeds: {e}")
             return None
@@ -35,11 +35,18 @@ class FeedService:
         if not feeds or not isinstance(feeds, list):
             return "No feeds available"
             
-        message = f"📰 <b>Latest Feeds</b> ({datetime.now().strftime('%H:%M')})\n\n"
+        message = f"📰 <b>Latest Articles</b> ({datetime.now().strftime('%H:%M')})\n\n"
         
         for feed in feeds[:Config.MAX_FEEDS_PER_MESSAGE]:
             title = feed.get('title', 'No title')[:100]
-            url = feed.get('url', '')
-            message += f"• <a href='{url}'>{title}</a>\n"
+            link = feed.get('link', '')
+            source = feed.get('source', 'Unknown')
+            categories = ', '.join(feed.get('categories', []))
+            
+            message += f"🔗 <a href='{link}'>{title}</a>\n"
+            message += f"📺 {source}"
+            if categories:
+                message += f" | 🏷️ {categories}"
+            message += "\n\n"
             
         return message
