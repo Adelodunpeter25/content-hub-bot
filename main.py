@@ -1,10 +1,11 @@
 """
 Content Hub Telegram Bot - Main Application
 
-A Flask-based Telegram bot that fetches feeds from Content Hub API every 20 minutes
+A Flask-based Telegram bot that fetches feeds from a backend API every 20 minutes
 and sends updates to subscribed users. Provides health monitoring and webhook endpoints.
 """
 
+import asyncio
 from flask import Flask
 from telegram import Bot
 from telegram.ext import Application, CommandHandler
@@ -45,11 +46,44 @@ application.add_handler(CommandHandler("start", telegram_service.start))
 application.add_handler(CommandHandler("feeds", telegram_service.get_feeds))
 application.add_handler(CommandHandler("stop", telegram_service.stop))
 
+# Store in Flask config for webhook access
+app.config['BOT'] = bot
+app.config['APPLICATION'] = application
+
+async def run_polling():
+    """Run bot in polling mode for development"""
+    logger.info("Starting bot in polling mode...")
+    await application.initialize()
+    await application.start()
+    await application.updater.start_polling()
+    
+    try:
+        # Keep running
+        await asyncio.Event().wait()
+    except KeyboardInterrupt:
+        logger.info("Stopping bot...")
+    finally:
+        await application.updater.stop()
+        await application.stop()
+        await application.shutdown()
+
 if __name__ == '__main__':
+    import sys
+    
     # Setup scheduler
     scheduler = scheduler_service.setup_scheduler(app)
     
-    try:
-        app.run(host='0.0.0.0', port=5000, debug=False)
-    except KeyboardInterrupt:
-        scheduler_service.shutdown()
+    if len(sys.argv) > 1 and sys.argv[1] == 'polling':
+        # Run in polling mode for development
+        try:
+            asyncio.run(run_polling())
+        except KeyboardInterrupt:
+            pass
+        finally:
+            scheduler_service.shutdown()
+    else:
+        # Run Flask server (webhook mode)
+        try:
+            app.run(host='0.0.0.0', port=5000, debug=True)
+        except KeyboardInterrupt:
+            scheduler_service.shutdown()
